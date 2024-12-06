@@ -3,6 +3,8 @@ import requests
 import zipfile
 import os
 import whisper  # OpenAI's Whisper model for transcription
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 # S3 Bucket information
 BUCKET_NAME = 'sasmatic-s3-store1'
@@ -23,7 +25,7 @@ def download_ffmpeg_from_s3():
 
 # Call the function to download FFmpeg
 download_ffmpeg_from_s3()
-# Now, try using ffmpeg in your app
+
 
 def transcribe_audio(file_path):
     # Load Whisper model
