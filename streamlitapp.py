@@ -8,51 +8,80 @@ from botocore.exceptions import NoCredentialsError
 
 # S3 Bucket information
 BUCKET_NAME = 'sasmatic-s3-store1'
-FFMPEG_FILE_KEY = 'ffmpeg/ffmpeg.tar.xz'
+FFMPEG_FILE_KEY = 'ffmpeg.zip'
 
 def download_ffmpeg_from_s3():
-    s3 = boto3.client('s3')
-    local_filename = '/tmp/ffmpeg.tar.xz'
+    """
+    Downloads FFmpeg binaries from S3 and extracts them to a temporary location.
+    """
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=st.secrets["AKIAVWC76MRGENEGF5XH"],
+        aws_secret_access_key=st.secrets["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"],
+        region_name=st.secrets["ap-south-1"]
+    )
     
+    local_zip_path = '/tmp/ffmpeg.zip'
+    ffmpeg_extract_path = '/tmp/ffmpeg/'
+
     try:
-        s3.download_file(BUCKET_NAME, FFMPEG_FILE_KEY, local_filename)
-        print("FFmpeg downloaded successfully.")
-        # You can extract it if it's a tar file, for example
-        os.system(f"tar -xf {local_filename} -C /tmp/ffmpeg/")
-        os.remove(local_filename)
+        # Download FFmpeg zip file from S3
+        s3.download_file(BUCKET_NAME, FFMPEG_FILE_KEY, local_zip_path)
+        st.info("FFmpeg downloaded successfully from S3.")
+
+        # Ensure the extraction path exists
+        os.makedirs(ffmpeg_extract_path, exist_ok=True)
+
+        # Extract the zip file
+        with zipfile.ZipFile(local_zip_path, 'r') as zip_ref:
+            zip_ref.extractall(ffmpeg_extract_path)
+        
+        # Add FFmpeg to PATH
+        os.environ["PATH"] += os.pathsep + ffmpeg_extract_path
+        
+        # Clean up
+        os.remove(local_zip_path)
+        st.info("FFmpeg successfully extracted and ready to use.")
     except NoCredentialsError:
-        print("Credentials not available")
-
-# Call the function to download FFmpeg
-download_ffmpeg_from_s3()
-
+        st.error("AWS credentials are not available. Check your Streamlit secrets configuration.")
+    except Exception as e:
+        st.error(f"An error occurred while downloading or extracting FFmpeg: {e}")
 
 def transcribe_audio(file_path):
-    # Load Whisper model
-    model = whisper.load_model("base")  # Change model type if needed (base, small, medium, large)
-    result = model.transcribe(file_path)
-    return result["text"]
+    """
+    Transcribes audio using OpenAI Whisper.
+    """
+    try:
+        # Load Whisper model
+        model = whisper.load_model("base")  # Adjust model size as needed
+        result = model.transcribe(file_path)
+        return result["text"]
+    except Exception as e:
+        raise RuntimeError(f"Error in transcription: {e}")
 
-# App setup
+# Streamlit App
 st.title("Audio/Video Transcription Service")
 st.write("Upload your audio/video file and get a transcription!")
 
 # Download FFmpeg at runtime
-download_ffmpeg()
+st.info("Setting up FFmpeg environment...")
+download_ffmpeg_from_s3()
 
 # File uploader
 uploaded_file = st.file_uploader("Upload audio/video file", type=["mp3", "mp4", "wav", "m4a", "ogg", "mpeg4"])
 
 if uploaded_file is not None:
-    # Save uploaded file locally
-    file_path = f"temp_{uploaded_file.name}"
-    with open(file_path, "wb") as f:
-        f.write(uploaded_file.read())
-
-    st.info("Transcribing your file, please wait...")
+    st.info("Processing your file...")
     try:
+        # Save uploaded file locally
+        file_path = f"temp_{uploaded_file.name}"
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.read())
+
         # Perform transcription
+        st.info("Transcribing your file, please wait...")
         transcription = transcribe_audio(file_path)
+
         st.success("Transcription completed!")
         st.text_area("Transcription:", transcription, height=300)
     except Exception as e:
