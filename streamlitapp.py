@@ -4,40 +4,25 @@ import zipfile
 import os
 import whisper  # OpenAI's Whisper model for transcription
 
-import os
-import requests
-import zipfile
+# S3 Bucket information
+BUCKET_NAME = 'sasmatic-s3-store1'
+FFMPEG_FILE_KEY = 'ffmpeg/ffmpeg.tar.xz'
 
-import os
-import requests
-import zipfile
-
-def download_ffmpeg():
-    ffmpeg_url = "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz"  # URL for FFmpeg binaries
-    ffmpeg_path = "/tmp/ffmpeg"  # Temporary path for FFmpeg on Streamlit Cloud
-
-    if not os.path.exists(ffmpeg_path):
-        os.makedirs(ffmpeg_path, exist_ok=True)
-        
-        # Download FFmpeg binaries
-        print("Downloading FFmpeg binaries...")
-        r = requests.get(ffmpeg_url)
-        with open("ffmpeg.tar.xz", "wb") as f:
-            f.write(r.content)
-        
-        # Extract the tar file (since it's tar.xz, not zip)
-        print("Extracting FFmpeg binaries...")
-        os.system(f"tar -xf ffmpeg.tar.xz -C {ffmpeg_path}")
-        
-        # Clean up
-        os.remove("ffmpeg.tar.xz")
+def download_ffmpeg_from_s3():
+    s3 = boto3.client('s3')
+    local_filename = '/tmp/ffmpeg.tar.xz'
     
-    # Add FFmpeg to the system path for the current session
-    os.environ["PATH"] += os.pathsep + os.path.join(ffmpeg_path, 'ffmpeg-*/bin')  # Update path dynamically
+    try:
+        s3.download_file(BUCKET_NAME, FFMPEG_FILE_KEY, local_filename)
+        print("FFmpeg downloaded successfully.")
+        # You can extract it if it's a tar file, for example
+        os.system(f"tar -xf {local_filename} -C /tmp/ffmpeg/")
+        os.remove(local_filename)
+    except NoCredentialsError:
+        print("Credentials not available")
 
-# Call the function to download and configure FFmpeg
-download_ffmpeg()
-
+# Call the function to download FFmpeg
+download_ffmpeg_from_s3()
 # Now, try using ffmpeg in your app
 
 def transcribe_audio(file_path):
