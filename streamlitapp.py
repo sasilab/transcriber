@@ -5,17 +5,34 @@ import os
 import whisper  # OpenAI's Whisper model for transcription
 
 def download_ffmpeg():
-    url = "https://drive.google.com/uc?export=download&id=1L0j4HqgKfLjYRnrsReNDwldmYbT_tBOt"  # Replace with your hosted FFmpeg binary link
+    url = "https://drive.google.com/uc?id=1L0j4HqgKfLjYRnrsReNDwldmYbT_tBOt&export=download"  # Replace with direct link
     ffmpeg_path = "ffmpeg"
+    
     if not os.path.exists(ffmpeg_path):
         os.makedirs(ffmpeg_path, exist_ok=True)
-        st.info("Downloading FFmpeg binaries...")
-        r = requests.get(url)
-        with open("ffmpeg.zip", "wb") as f:
-            f.write(r.content)
-        with zipfile.ZipFile("ffmpeg.zip", "r") as zip_ref:
-            zip_ref.extractall(ffmpeg_path)
-        os.remove("ffmpeg.zip")
+        print("Downloading FFmpeg binaries...")
+        
+        try:
+            r = requests.get(url, stream=True)
+            r.raise_for_status()
+            
+            # Save the content as a file
+            with open("ffmpeg.zip", "wb") as f:
+                f.write(r.content)
+
+            # Validate if it's a zip file
+            if zipfile.is_zipfile("ffmpeg.zip"):
+                with zipfile.ZipFile("ffmpeg.zip", "r") as zip_ref:
+                    zip_ref.extractall(ffmpeg_path)
+                print("FFmpeg downloaded and extracted successfully!")
+                os.remove("ffmpeg.zip")
+            else:
+                os.remove("ffmpeg.zip")
+                raise zipfile.BadZipFile("Downloaded file is not a valid ZIP file.")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
     os.environ["PATH"] += os.pathsep + os.path.abspath(ffmpeg_path)
 
 def transcribe_audio(file_path):
