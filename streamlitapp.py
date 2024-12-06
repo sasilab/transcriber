@@ -4,36 +4,32 @@ import zipfile
 import os
 import whisper  # OpenAI's Whisper model for transcription
 
+import os
+import requests
+import zipfile
+
 def download_ffmpeg():
-    url = "https://drive.google.com/uc?id=1L0j4HqgKfLjYRnrsReNDwldmYbT_tBOt&export=download"  # Replace with direct link
-    ffmpeg_path = "ffmpeg"
-    
+    ffmpeg_url = "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz"  # URL for FFmpeg binaries
+    ffmpeg_path = "/tmp/ffmpeg"  # Temporary path for FFmpeg on Streamlit Cloud
+
     if not os.path.exists(ffmpeg_path):
         os.makedirs(ffmpeg_path, exist_ok=True)
-        print("Downloading FFmpeg binaries...")
         
-        try:
-            r = requests.get(url, stream=True)
-            r.raise_for_status()
-            
-            # Save the content as a file
-            with open("ffmpeg.zip", "wb") as f:
-                f.write(r.content)
-
-            # Validate if it's a zip file
-            if zipfile.is_zipfile("ffmpeg.zip"):
-                with zipfile.ZipFile("ffmpeg.zip", "r") as zip_ref:
-                    zip_ref.extractall(ffmpeg_path)
-                print("FFmpeg downloaded and extracted successfully!")
-                os.remove("ffmpeg.zip")
-            else:
-                os.remove("ffmpeg.zip")
-                raise zipfile.BadZipFile("Downloaded file is not a valid ZIP file.")
-
-        except Exception as e:
-            print(f"An error occurred: {e}")
-
-    os.environ["PATH"] += os.pathsep + os.path.abspath(ffmpeg_path)
+        # Download FFmpeg binaries
+        print("Downloading FFmpeg binaries...")
+        r = requests.get(ffmpeg_url)
+        with open("ffmpeg.tar.xz", "wb") as f:
+            f.write(r.content)
+        
+        # Extract the tar file (since it's tar.xz, not zip)
+        print("Extracting FFmpeg binaries...")
+        os.system(f"tar -xf ffmpeg.tar.xz -C {ffmpeg_path}")
+        
+        # Clean up
+        os.remove("ffmpeg.tar.xz")
+    
+    # Add FFmpeg to the system path for the current session
+    os.environ["PATH"] += os.pathsep + os.path.join(ffmpeg_path, 'ffmpeg-*/bin')  # Update path dynamically
 
 def transcribe_audio(file_path):
     # Load Whisper model
