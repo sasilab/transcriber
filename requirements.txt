@@ -1,4 +1,4 @@
-streamlit
-openai-whisper
-torch
-ffmpeg
+streamlit  # Latest stable version of Streamlit
+whisper     # OpenAI Whisper
+ffmpeg-python      # FFmpeg wrapper for Python
+requests           # For downloading FFmpeg binaries
