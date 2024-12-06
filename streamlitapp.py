@@ -8,6 +8,10 @@ import os
 import requests
 import zipfile
 
+import os
+import requests
+import zipfile
+
 def download_ffmpeg():
     ffmpeg_url = "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz"  # URL for FFmpeg binaries
     ffmpeg_path = "/tmp/ffmpeg"  # Temporary path for FFmpeg on Streamlit Cloud
@@ -30,6 +34,11 @@ def download_ffmpeg():
     
     # Add FFmpeg to the system path for the current session
     os.environ["PATH"] += os.pathsep + os.path.join(ffmpeg_path, 'ffmpeg-*/bin')  # Update path dynamically
+
+# Call the function to download and configure FFmpeg
+download_ffmpeg()
+
+# Now, try using ffmpeg in your app
 
 def transcribe_audio(file_path):
     # Load Whisper model
