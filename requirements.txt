@@ -2,3 +2,4 @@ streamlit  # Latest stable version of Streamlit
 openai-whisper   # OpenAI Whisper
 ffmpeg-python      # FFmpeg wrapper for Python
 requests           # For downloading FFmpeg binaries
+boto3
