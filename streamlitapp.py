@@ -16,9 +16,9 @@ def download_ffmpeg_from_s3():
     """
     s3 = boto3.client(
         's3',
-        aws_access_key_id=st.secrets["AKIAVWC76MRGENEGF5XH"],
-        aws_secret_access_key=st.secrets["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"],
-        region_name=st.secrets["ap-south-1"]
+        aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"],
+        region_name=st.secrets["AWS_DEFAULT_REGION"]
     )
     
     local_zip_path = '/tmp/ffmpeg.zip'
